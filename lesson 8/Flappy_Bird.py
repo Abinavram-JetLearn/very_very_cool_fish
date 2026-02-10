@@ -1,4 +1,6 @@
-import pygame, random
+import pygame, random, time
+
+pygame.init()
 
 WIDTH = 800
 HEIGHT = 600
@@ -19,8 +21,21 @@ player_anim_1 = pygame.image.load("2. Pro Game Developer\lesson 8\Bird_f1.png")
 player_anim_2 = pygame.image.load("2. Pro Game Developer\lesson 8\Bird_f2.png")
 player_anim_3 = pygame.image.load("2. Pro Game Developer\lesson 8\Bird_f3.png")
 
+restart_button = pygame.image.load("2. Pro Game Developer\lesson 8\Restart.png")
+
+font = pygame.font.SysFont("Verdana", 36)
+
+pipe_img = pygame.image.load("2. Pro Game Developer\lesson 8\pipe.png")
+
 isGameOver = False
 isFlying = False
+
+pipe_gap = 150
+pipe_frequency = 1500
+last_pipe = pygame.time.get_ticks()
+
+restart_button_x = WIDTH+100
+restart_button_y = HEIGHT/2+50
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -48,7 +63,7 @@ class Player(pygame.sprite.Sprite):
             keys = pygame.key.get_pressed()
             if keys[pygame.K_SPACE] and self.click == False and self.rect.top > 100:
                 self.click = True
-                self.vel = -10
+                self.vel = -5
 
             else:
                 self.click = False
@@ -67,11 +82,38 @@ bird = Player(30,HEIGHT/2)
 bird_Group = pygame.sprite.Group()
 bird_Group.add(bird)
 
+class Pipe (pygame.sprite.Sprite):
+    def __init__(self, x, y, direction):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.dir = direction
+        self.image = pipe_img
+        self.rect = self.image.get_rect()
+        if self.dir == "top":
+            self.image = pygame.transform.flip(self.image, False, True)
+            self.rect.bottomleft = self.x, self.y - pipe_gap/2
+        if self.dir == "bottom":
+            self.rect.topleft = self.x, self.y + pipe_gap/2
+    
+    def update(self):
+        if self.rect.x > -78:
+            self.rect.x -= 3
+        else:
+            self.kill()
+pipe_group = pygame.sprite.Group()
 while True:
     clock.tick(60)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if pygame.mouse.get_pos() == (restart_button_x, restart_button_y):
+                isGameOver = False
+                pipe_group.empty()
+                bird.rect.x = 30
+                bird.rect.y = HEIGHT/2
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 if isFlying == False and isGameOver == False:
@@ -79,15 +121,36 @@ while True:
     if bird.rect.bottom > 500:
         isGameOver = True
 
+    if pygame.sprite.groupcollide(bird_Group, pipe_group, False, False):
+        isGameOver = True
+
     if isGameOver == False:
+        pipe_group.update()
+        time_now = pygame.time.get_ticks()
+        if time_now - last_pipe > pipe_frequency:
+            y = random.randint(-100,100)
+            bottompipe = Pipe(WIDTH, HEIGHT/2 + y, "bottom")
+            toppipe = Pipe(WIDTH, HEIGHT/2 + y, "top")
+            pipe_group.add(bottompipe)
+            pipe_group.add(toppipe)
+            last_pipe = time_now 
         if bird.rect.top < 0:
             bird.rect.top = 0
         if m_p <= -800:
             m_p = 0
         else:
-            m_p -= 0.1
+            m_p -= 2
+    else:
+        restart_msg = "Game Over! Press Restart!"
+
+        screen.blit(restart_button, (WIDTH+100, HEIGHT/2 + 50))
+        text = font.render(restart_msg, True, True)
+        screen.blit(text, (restart_button_x, restart_button_y))
+        pygame.display.update()
+
     screen.blit(BG, (0,0))
     bird_Group.draw(screen)
+    pipe_group.draw(screen)
     bird_Group.update()
     screen.blit(platform, (m_p, HEIGHT - 100))
     pygame.display.update()
