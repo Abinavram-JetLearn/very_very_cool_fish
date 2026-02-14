@@ -34,8 +34,10 @@ pipe_gap = 150
 pipe_frequency = 1500
 last_pipe = pygame.time.get_ticks()
 
-restart_button_x = WIDTH+100
-restart_button_y = HEIGHT/2+50
+restart_button_x = WIDTH/2 - 60
+restart_button_y = HEIGHT/2 - 42
+
+score = 0
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -101,6 +103,7 @@ class Pipe (pygame.sprite.Sprite):
             self.rect.x -= 3
         else:
             self.kill()
+
 pipe_group = pygame.sprite.Group()
 while True:
     clock.tick(60)
@@ -108,11 +111,13 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if pygame.mouse.get_pos() == (restart_button_x, restart_button_y):
+            if isGameOver == True and pygame.mouse.get_pos()[0] >= restart_button_x and pygame.mouse.get_pos()[0] <= restart_button_x + 1200 and pygame.mouse.get_pos()[1] >= restart_button_y and pygame.mouse.get_pos()[1] <= restart_button_y + 42:
                 isGameOver = False
                 pipe_group.empty()
                 bird.rect.x = 30
                 bird.rect.y = HEIGHT/2
+                isFlying = False
+                score = 0
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
@@ -139,18 +144,23 @@ while True:
         if m_p <= -800:
             m_p = 0
         else:
-            m_p -= 2
-    else:
-        restart_msg = "Game Over! Press Restart!"
-
-        screen.blit(restart_button, (WIDTH+100, HEIGHT/2 + 50))
-        text = font.render(restart_msg, True, True)
-        screen.blit(text, (restart_button_x, restart_button_y))
-        pygame.display.update()
+            m_p -= 3
+        for pipes in pipe_group:
+            if pipes.rect.x < -70:
+                score += 0.5
+                pipes.kill()
 
     screen.blit(BG, (0,0))
     bird_Group.draw(screen)
     pipe_group.draw(screen)
     bird_Group.update()
     screen.blit(platform, (m_p, HEIGHT - 100))
+    scoremsG = f"Score: {int(score)}"
+    scoremsg = font.render(scoremsG, True, True)
+    screen.blit(scoremsg, (10,10))
+    if isGameOver == True:
+        restart_msg = "Game Over! Press Restart!"
+        screen.blit(restart_button, (restart_button_x, restart_button_y))
+        text = font.render(restart_msg, True, True)
+        screen.blit(text, (225,10))
     pygame.display.update()
