@@ -8,6 +8,10 @@ count = 0
 
 pygame.init()
 
+score = 0
+
+font = pygame.font.SysFont("Verdana", 36)
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 bg = pygame.image.load("2. Pro Game Developer\lesson 9\BG.png")
@@ -34,15 +38,20 @@ class Spaceship(pygame.sprite.Sprite):
         self.rect.center = (WIDTH/2, HEIGHT/2)
         self.angle = 0
         self.speed = 5
-    def update(self, keys):
+        self.health = 10
+    def update(self, keys, bullet_group, player_group):
         if keys[pygame.K_RIGHT]:
             self.angle -= 3
         if keys[pygame.K_LEFT]:
             self.angle +=  3
         if keys[pygame.K_UP]:
-                rad = math.radians(self.angle + 90)
-                self.rect.x += math.cos(rad) * self.speed
-                self.rect.y -= math.sin(rad) * self.speed
+            rad = math.radians(self.angle + 90)
+            self.rect.x += math.cos(rad) * self.speed
+            self.rect.y -= math.sin(rad) * self.speed
+        if keys[pygame.K_SPACE]:
+            bullet = Bullet(self.rect.center, self.angle)
+            bullet_group.add(bullet)
+
         if self.rect.right < 0:
             self.rect.left = WIDTH
         if self.rect.left > WIDTH:
@@ -55,34 +64,64 @@ class Spaceship(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center = self.rect.center)
 
 class Asteroids(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, player, asteroid_group):
         super().__init__()
         self.image = random.choice(asteroids)
+        self.group = asteroid_group
         self.x = random.choice([WIDTH + random.randint(-50,100), 0 - random.randint(-50,100)])
         self.y = random.choice([HEIGHT + random.randint(-50,100), 0 - random.randint(-50,100)])
         self.rect = self.image.get_rect()
+        self.player = player
         self.rect.center = (self.x, self.y)
-        self.vx = random.randint(-4, 4)
-        self.vy = random.randint(-4, 4)
+        self.speed = random.randint(1,6)
+        dx = self.player.rect.x - self.rect.x
+        dy = self.player.rect.y - self.rect.y
+        distance = math.hypot(dx,dy)
+        if distance != 0:
+            dx/= distance
+            dy/= distance
+        self.vx = dx* self.speed
+        self.vy = dy* self.speed
 
+    def update(self):
+        self.rect.x += self.vx
+        self.rect.y += self.vy
+
+        if not screen.get_rect().inflate(100,100).colliderect(self.rect):
+            self.kill()
+
+        if pygame.sprite.spritecollide(player, self.group, True):
+            self.player.health -= 1
+            self.kill()
+
+player = Spaceship()
+player_group = pygame.sprite.Group()
+player_group.add(player)
+asteroid_group = pygame.sprite.Group()
+bullet_group = pygame.sprite.Group()
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, pos, angle):
+        super().__init__()
+        self.image = pygame.Surface((4,4))
+        self.image.fill((230, 23, 106))
+        self.rect = self.image.get_rect(center=pos)
+        rad = math.radians(angle+90)
+        self.vx = math.cos(rad)*10
+        self.vy = -math.sin(rad)*10
+    
     def update(self):
         self.rect.x += self.vx
         self.rect.y += self.vy
         if not screen.get_rect().colliderect(self.rect):
             self.kill()
 
-player = Spaceship()
-player_group = pygame.sprite.Group()
-player_group.add(player)
-asteroid = Asteroids()
-asteroid_group = pygame.sprite.Group()
-asteroid_group.add(asteroid)
-
 while True:
     clock.tick(60)
     count += 1
-    if count == 10:
-        asteroid = Asteroids()
+    text = font.render(f"Lives: {player.health} Score: {score}", True, "white")
+    if count == 60:
+        asteroid = Asteroids(player, asteroid_group)
         asteroid_group.add(asteroid)
         count = 0
 
@@ -91,9 +130,12 @@ while True:
             pygame.quit()
 
     screen.blit(bg, (0,0))
+    screen.blit(text, (0,0))
     keys = pygame.key.get_pressed()
-    player_group.update(keys)
+    player_group.update(keys, bullet_group, player_group)
     player_group.draw(screen)
     asteroid_group.draw(screen)
     asteroid_group.update()
-    pygame.display.update()
+    bullet_group.update()
+    bullet_group.draw(screen)
+    pygame.display.update() #
