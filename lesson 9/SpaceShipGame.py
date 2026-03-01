@@ -1,4 +1,4 @@
-import pygame, math, random
+import pygame, math, random, time
 
 WIDTH = 800
 HEIGHT = 600
@@ -13,6 +13,8 @@ score = 0
 font = pygame.font.SysFont("Verdana", 36)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+game_State = True
 
 bg = pygame.image.load("2. Pro Game Developer\lesson 9\BG.png")
 L_asteroid = pygame.image.load("2. Pro Game Developer\lesson 9\LargeAsteroid.png")
@@ -48,10 +50,6 @@ class Spaceship(pygame.sprite.Sprite):
             rad = math.radians(self.angle + 90)
             self.rect.x += math.cos(rad) * self.speed
             self.rect.y -= math.sin(rad) * self.speed
-        if keys[pygame.K_SPACE]:
-            bullet = Bullet(self.rect.center, self.angle)
-            bullet_group.add(bullet)
-
         if self.rect.right < 0:
             self.rect.left = WIDTH
         if self.rect.left > WIDTH:
@@ -62,6 +60,10 @@ class Spaceship(pygame.sprite.Sprite):
             self.rect.top = -100
         self.image = pygame.transform.rotate(self.origional_image, self.angle)
         self.rect = self.image.get_rect(center = self.rect.center)
+
+    def Shoot(self, bullet_group, player_group):
+            bullet = Bullet(self.rect.center, self.angle)
+            bullet_group.add(bullet)
 
 class Asteroids(pygame.sprite.Sprite):
     def __init__(self, player, asteroid_group):
@@ -92,6 +94,7 @@ class Asteroids(pygame.sprite.Sprite):
 
         if pygame.sprite.spritecollide(player, self.group, True):
             self.player.health -= 1
+            Small_Expo.play()
             self.kill()
 
 player = Spaceship()
@@ -116,7 +119,7 @@ class Bullet(pygame.sprite.Sprite):
         if not screen.get_rect().colliderect(self.rect):
             self.kill()
 
-while True:
+while game_State == True:
     clock.tick(60)
     count += 1
     text = font.render(f"Lives: {player.health} Score: {score}", True, "white")
@@ -124,10 +127,33 @@ while True:
         asteroid = Asteroids(player, asteroid_group)
         asteroid_group.add(asteroid)
         count = 0
-
+    hitlist = pygame.sprite.groupcollide(bullet_group, asteroid_group, True, True)
+    for item in hitlist:
+        score += random.randint(1,10)
+        Big_Expo.play()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                player.Shoot(bullet_group, player_group)
+                Shooting.play()
+
+
+    if player.health < 1:
+        game_State = False
+        text = font.render(f"You got! {score} Point(s)! Press 'R' to Restart", True, "white")
+        screen.blit(bg, (0,0))
+        screen.blit(text, (0,0))
+        pygame.display.update()
+        time.sleep(3)
+        if keys[pygame.K_r]:
+            if game_State == False:
+                game_State = True
+                player.health = 10
+                score = 0
+                for asteroid in asteroid_group:
+                    asteroid.kill()
 
     screen.blit(bg, (0,0))
     screen.blit(text, (0,0))
@@ -138,4 +164,4 @@ while True:
     asteroid_group.update()
     bullet_group.update()
     bullet_group.draw(screen)
-    pygame.display.update() #
+    pygame.display.update()
