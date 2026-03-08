@@ -1,0 +1,17 @@
+from tkinter import *
+
+screen = Tk()
+screen.title("Login Me")
+screen.geometry("450x300")
+screen.config(background="ivory2")
+title = Label(screen, text="Hello!", bg="ivory3", fg="black", font=("times", 28, "bold"))
+title2 = Label(screen, text="Hello!", bg="ivory3", fg="black", font=("times", 28, "bold"))
+title3 = Label(screen, text="Hello!", bg="ivory3", fg="black", font=("times", 28, "bold"))
+username = Entry(screen)
+submit = Button(screen, text= "submit")
+username.place(x = 190, y=250)
+submit.place(x= 190, y=150)
+title.grid(row = 1,  column = 1, padx= 100, pady= 15)
+title3.grid(row = 2,  column = 1)
+title2.grid(row = 1,  column = 2)
+screen.mainloop()
