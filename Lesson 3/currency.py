@@ -1,0 +1,17 @@
+from tkinter import *
+
+screen = Tk()
+screen.title("💰Currency exchange💰")
+screen.geometry("600x600")
+screen.config(background="white")
+title = Label(screen, text="Money Converter", fg="black", font=("verdana", 35, "bold"))
+title2 = Label(screen, text="Type in an amount and see what its worth", fg="black", font=("verdana", 12, "bold"))
+ihaveframe = Frame(screen, bg= "yellow", highlightthickness= 1, highlightbackground = "yellow")
+ihavetext = Label(ihaveframe, text="I have...", bg="yellow", fg="black", font=("verdana", 12, "bold"))
+ihaveentry = Entry(ihaveframe, font=("verdana", 30, "bold"))
+title.pack(pady= 10)
+title2.pack(pady= 10)
+ihaveframe.place(x= 50, y= 200, width=500, height=100)
+ihavetext.pack(padx= 10, pady= 10, anchor="w")
+ihaveentry.pack(padx= 10, pady= 10)
+screen.mainloop()
